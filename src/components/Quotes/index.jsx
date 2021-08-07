@@ -16,15 +16,9 @@ class Quotes extends Component {
         quotesList: quotesDB,
       });
 
-      this.setState({ quoteToShow: this.state.quotesList[0] });
+      this.setState({ quoteToShow: this.state.quotesList[Math.floor(Math.random() * this.state.quotesList.length)] });
     }, 3000);
   }
-
-  componentDidUpdate(){
-      console.log("El nuevo valor del estado quoteToShow es:")
-      console.log(this.state.quoteToShow)
-  }
-
 
   getRandomQuote() {
     this.setState({ quoteToShow: this.state.quotesList[Math.floor(Math.random() * this.state.quotesList.length)] })
