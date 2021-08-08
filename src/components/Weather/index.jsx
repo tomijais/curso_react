@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 
-export default class Weather extends Component {
+const API_KEY = "0f97f778280c1da915b85ba30be6fefe";
+
+class Weather extends Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       city: props.city,
       cityWeather: null,
@@ -11,124 +13,101 @@ export default class Weather extends Component {
     };
   }
 
-  async componentDidMount() {
+  getWeather = async (city) => {
     const response = await fetch(
-      `http://api.openweathermap.org/data/2.5/weather?appid=0f97f778280c1da915b85ba30be6fefe&units=metric&q=${this.state.city}`
+      `http://api.openweathermap.org/data/2.5/weather?&units=metric&q=${city}&appid=${API_KEY}`
     );
     const data = await response.json();
+    return data;
+  };
 
-    if (data.cod === 404) {
-      this.setState({
-        cityWeather: null,
-        isLoading: false,
-        cityExist: false,
-      });
-    } else if (data.cod === 200) {
-      this.setState({
-        cityWeather: data,
-        isLoading: false,
-        cityExist: true,
+  setStates = () => {
+    const { city } = this.state;
+    if (city) {
+      this.getWeather(city).then((data) => {
+        if (data.cod === 200) {
+          this.setState({
+            cityWeather: data,
+            isLoading: false,
+            cityExist: true,
+          });
+        }
+        if (data.cod === 404) {
+          this.setState({
+            isLoading: false,
+            cityExist: false,
+            cityWeather: null,
+          });
+        }
       });
     }
-  }
+  };
 
-  searchCityWheather = (e) => {
+  searchCityWeather = (e) => {
     e.preventDefault();
+
     const form = e.currentTarget;
-    const value = form.city.value;
-    this.setState({
-      city: value,
-    });
-    this.getWeatherData();
+    const cityName = form.cityName.value;
+
+    this.setState({ city: cityName, isLoading: true });
+
+    this.setStates();
+
     form.reset();
   };
 
-  componentDidUpdate() {
-    console.log(`Datos de clima de ${this.state.city}`);
-    console.log(this.state.cityWeather ?? "No hay datos para mostrar");
+  componentDidMount() {
+    this.setStates();
   }
 
-  async getWeatherData() {
-    const response = await fetch(
-      `http://api.openweathermap.org/data/2.5/weather?appid=0f97f778280c1da915b85ba30be6fefe&units=metric&q=${this.state.city}`
-    ).catch((e) => {
-      console.log("no existe");
-      this.setState({
-        cityWeather: null,
-        isLoading: false,
-        cityExist: false,
-      });
-    });
-    const data = await response.json();
-
-    if (data.cod === 404) {
-      console.log("no existe");
-      this.setState({
-        cityWeather: null,
-        isLoading: false,
-        cityExist: false,
-      });
-    } else if (data.cod === 200) {
-      this.setState({
-        cityWeather: data,
-        isLoading: false,
-        cityExist: true,
-      });
-    }
+  componentDidUpdate() {
+    console.log(`Datos del clima de: ${this.state.city}`);
+    console.log(this.state.cityWeather ?? "No hay datos para esta ciudad");
   }
 
   render() {
-    const { city } = this.props;
+    const { cityWeather, isLoading, city, cityExist } = this.state;
     return (
       <div>
-        <h2>{this.state.city}</h2>
-        {!city && <h2>Comienza buscando una ciudad</h2>}
-        {city && this.state.cityExist && this.state.isLoading && (
-          <h2>Comienza buscando una ciudad</h2>
-        )}
+        <h2>Weather</h2>
 
-        <form action="" onSubmit={this.searchCityWheather}>
-          <label htmlFor="city">Escriba una cuidad para buscar</label>
-          <input
-            type="text"
-            name="city"
-            id="city"
-            placeholder="Escriba una cuidad"
-          />
+        <form onSubmit={this.searchCityWeather}>
+          <label>Busca tu ciudad:</label>
+          <input type="text" name="cityName" />
           <button type="submit">Buscar</button>
         </form>
 
-        {this.state.cityWeather != null &&
-          this.state.cityExist &&
-          this.state.isLoading === false && (
-            <div>
-              <p>El nombre de la cuidad es: {this.state.city}</p>
-              <p>
-                La temperatura actual es de:{" "}
-                {this.state.cityWeather?.main?.temp} grados
-              </p>
-              <p>
-                La temperatura minima es de:{" "}
-                {this.state.cityWeather?.main?.temp_min} grados
-              </p>
-              <p>
-                La temperatura maxima es de:{" "}
-                {this.state.cityWeather?.main?.temp_max} grados
-              </p>
-              <p>La humedad es de: {this.state.cityWeather?.main?.humidity}</p>
-              <p>
-                La sensation termica de:{" "}
-                {this.state.cityWeather?.main?.feels_like}
-              </p>
-            </div>
-          )}
+        {!city && <h3>Comienza buscando una ciudad</h3>}
 
-        {this.state.isLoading === false &&
-          this.state.cityExist === false &&
-          this.state.weather && (
-            <p>No se ha encontrado ninguna ciudad con este nombre</p>
-          )}
+        {isLoading && city && cityExist && <p>Cargando...</p>}
+        {!isLoading && cityExist && cityWeather && (
+          <>
+            <h2>
+              {cityWeather.name}
+              <img
+                src={`http://openweathermap.org/img/wn/${cityWeather.weather[0].icon}@2x.png`}
+                alt="weather icon"
+                width="20px"
+              />
+            </h2>
+            <ul>
+              <li>Temperatura actual: {cityWeather.main.temp.toFixed()}°C</li>
+              <li>
+                Sensación térmica: {cityWeather.main.feels_like.toFixed()}°C
+              </li>
+              <li>Humedad: {cityWeather.main.humidity}%</li>
+              <li>Máxima: {cityWeather.main.temp_max.toFixed()}°C</li>
+              <li>Mínima: {cityWeather.main.temp_min.toFixed()}°C</li>
+            </ul>
+          </>
+        )}
+
+        {!isLoading && !cityExist && (
+          <p>No se ha encontrado ninguna ciudad con este nombre</p>
+        )}
       </div>
     );
   }
 }
+
+export default Weather;

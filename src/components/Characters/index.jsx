@@ -6,10 +6,10 @@ const Characters = (props) => {
     const {characters = []} = props;
 
   return (
-    <ul>
+    <ul style={{padding: "0" }}>
       {characters.map((e) => {
         return (
-          <li key={e.id}>
+          <li key={e.id} style={ {border: '1px solid black', marginTop: '10px', backgroundColor: 'lightGrey', listStyleType: "none"}}>
             <h2>{e.name}</h2>
             <img src={e.image} alt={`Imagen de ${e.name}`} />
             <p>{e.species}</p>
